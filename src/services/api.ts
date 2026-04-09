@@ -6,12 +6,17 @@ import type {
   SpeechToTextResult
 } from '../types/triage.js';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+const API_URL =
+  import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:4000/api' : '');
 
 const REQUEST_TIMEOUT_MS = 10000;
 const STT_REQUEST_TIMEOUT_MS = 60000;
 
 async function request<T>(path: string, options?: RequestInit, timeoutMs = REQUEST_TIMEOUT_MS): Promise<T> {
+  if (!API_URL) {
+    throw new Error('VITE_API_URL is not configured for this deployment.');
+  }
+
   const controller = new AbortController();
   const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
 
@@ -48,6 +53,10 @@ async function sendAudioRequest<T>(
   durationSeconds: number,
   mode: 'pretranscribe' | 'final'
 ): Promise<T> {
+  if (!API_URL) {
+    throw new Error('VITE_API_URL is not configured for this deployment.');
+  }
+
   const controller = new AbortController();
   const timeoutId = window.setTimeout(() => controller.abort(), STT_REQUEST_TIMEOUT_MS);
 
