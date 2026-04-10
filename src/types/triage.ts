@@ -61,6 +61,7 @@ export interface EncRecord {
     completed: boolean;
   }>;
   disposition?: {
+    department: string;
     status: string;
     time: string;
     notes: string;

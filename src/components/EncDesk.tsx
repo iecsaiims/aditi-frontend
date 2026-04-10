@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { AIIMSR_DEPARTMENTS, DEFAULT_DISPOSITION_DEPARTMENT } from '../data/departmentOptions';
 import type { EncRecord, Patient } from '../types/triage';
 
 type Props = {
@@ -9,17 +10,6 @@ type Props = {
   onSaveDisposition: (patientId: string, disposition: NonNullable<EncRecord['disposition']>) => void;
 };
 
-const departments = [
-  'Anaesthesiology',
-  'Cardiology',
-  'Dermatology',
-  'Neurology',
-  'Psychiatry',
-  'Radiology',
-  'Surgery',
-  'Urology'
-];
-
 export function EncDesk({ patient, record, onBack, onSaveConsultation, onSaveDisposition }: Props) {
   const [consultationCompleted, setConsultationCompleted] = useState('');
   const [department, setDepartment] = useState('');
@@ -27,6 +17,9 @@ export function EncDesk({ patient, record, onBack, onSaveConsultation, onSaveDis
   const [callGivenBy, setCallGivenBy] = useState('');
   const [callTime, setCallTime] = useState('');
 
+  const [dispositionDepartment, setDispositionDepartment] = useState(
+    record?.disposition?.department ?? DEFAULT_DISPOSITION_DEPARTMENT
+  );
   const [dispositionStatus, setDispositionStatus] = useState(record?.disposition?.status ?? '');
   const [dispositionTime, setDispositionTime] = useState(record?.disposition?.time ?? '');
   const [dispositionNotes, setDispositionNotes] = useState(record?.disposition?.notes ?? '');
@@ -62,8 +55,9 @@ export function EncDesk({ patient, record, onBack, onSaveConsultation, onSaveDis
   };
 
   const saveDisposition = () => {
-    if (!dispositionStatus || !dispositionTime) return;
+    if (!dispositionDepartment || !dispositionStatus || !dispositionTime) return;
     onSaveDisposition(patient.id, {
+      department: dispositionDepartment,
       status: dispositionStatus,
       time: dispositionTime,
       notes: dispositionNotes
@@ -140,7 +134,7 @@ export function EncDesk({ patient, record, onBack, onSaveConsultation, onSaveDis
                 <label>Department</label>
                 <select value={department} onChange={(event) => setDepartment(event.target.value)}>
                   <option value="">Select department</option>
-                  {departments.map((item) => <option key={item} value={item}>{item}</option>)}
+                  {AIIMSR_DEPARTMENTS.map((item) => <option key={item} value={item}>{item}</option>)}
                 </select>
               </div>
               <div className="input-group">
@@ -175,6 +169,7 @@ export function EncDesk({ patient, record, onBack, onSaveConsultation, onSaveDis
         <h3>Disposition</h3>
         {dispositionSaved ? (
           <div className="info-grid">
+            <div><strong>Department:</strong> {record?.disposition?.department || '-'}</div>
             <div><strong>Status:</strong> {record?.disposition?.status}</div>
             <div><strong>Time:</strong> {record?.disposition?.time}</div>
             <div><strong>Notes:</strong> {record?.disposition?.notes || '-'}</div>
@@ -182,6 +177,14 @@ export function EncDesk({ patient, record, onBack, onSaveConsultation, onSaveDis
         ) : (
           <>
             <div className="grid-2">
+              <div className="input-group">
+                <label>Department</label>
+                <select value={dispositionDepartment} onChange={(event) => setDispositionDepartment(event.target.value)}>
+                  {AIIMSR_DEPARTMENTS.map((item) => (
+                    <option key={item} value={item}>{item}</option>
+                  ))}
+                </select>
+              </div>
               <div className="input-group">
                 <label>Disposition Status</label>
                 <select value={dispositionStatus} onChange={(event) => setDispositionStatus(event.target.value)}>

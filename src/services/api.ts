@@ -125,6 +125,7 @@ export const api = {
         completed: boolean;
       }>;
       disposition?: {
+        department: string;
         status: string;
         time: string;
         notes?: string;
@@ -142,6 +143,7 @@ export const api = {
       })),
       disposition: response.disposition
         ? {
+            department: response.disposition.department,
             status: response.disposition.status,
             time: response.disposition.time,
             notes: response.disposition.notes ?? ''

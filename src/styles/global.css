@@ -185,6 +185,11 @@ tr td:last-child { border-radius: 0 8px 8px 0; }
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
 .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
 .input-group label { display: block; font-size: .875rem; font-weight: 500; margin-bottom: .4rem; }
+.field-error-text {
+  color: var(--danger-color);
+  font-size: .85rem;
+  margin-top: .25rem;
+}
 .required-marker { color: var(--danger-color); font-weight: 800; }
 .full-width { grid-column: 1 / -1; }
 .radio-toggles { display: flex; background: #f1f5f9; border-radius: var(--radius-sm); padding: .25rem; }

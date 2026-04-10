@@ -31,6 +31,14 @@ export type ChecklistField =
   | 'traumaSpecial'
   | 'ncctHead';
 
+const VITAL_LIMITS = {
+  pulse: { min: 0, max: 300 },
+  spo2: { min: 0, max: 100 },
+  dbp: { min: 0, max: 200 },
+  sbp: { min: 0, max: 300 },
+  rr: { min: 0, max: 80 }
+} as const;
+
 type FormState = {
   crNo: string;
   patientName: string;
@@ -67,6 +75,28 @@ type FormState = {
   tNotAnticoag: boolean | null;
   finalCategory: TriageCategory | '';
 };
+
+export type VitalField = keyof typeof VITAL_LIMITS;
+
+export function getVitalValidationMessage(field: VitalField, value: string) {
+  if (!value.trim()) return '';
+
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) {
+    return 'Enter a valid number.';
+  }
+
+  const { min, max } = VITAL_LIMITS[field];
+  if (numericValue < min) {
+    return `Value must be ≥ ${min}`;
+  }
+
+  if (numericValue > max) {
+    return `Value must be ≤ ${max}`;
+  }
+
+  return '';
+}
 
 type Props = {
   form: FormState;
@@ -128,6 +158,13 @@ export function TriageForm({
     : 'Please enter key vitals (Pulse, SBP, SpO2, RR) to confirm pathway.';
   const isRecording = voiceStatus === 'recording';
   const isTranscribing = voiceStatus === 'transcribing';
+  const vitalErrors = {
+    pulse: getVitalValidationMessage('pulse', form.pulse),
+    sbp: getVitalValidationMessage('sbp', form.sbp),
+    dbp: getVitalValidationMessage('dbp', form.dbp),
+    spo2: getVitalValidationMessage('spo2', form.spo2),
+    rr: getVitalValidationMessage('rr', form.rr)
+  };
 
   useEffect(() => {
     return () => {
@@ -439,8 +476,8 @@ export function TriageForm({
             )}
           </div>
           <div className="input-group mt-2">
-            <label>Complaint Transcript / Summary</label>
-            <textarea rows={3} value={form.complaintText} onChange={(event) => onFieldChange('complaintText', event.target.value)} />
+            <label>Complaint Transcript / Summary {requiredMarker}</label>
+            <textarea required rows={3} value={form.complaintText} onChange={(event) => onFieldChange('complaintText', event.target.value)} />
           </div>
         </section>
 
@@ -452,22 +489,42 @@ export function TriageForm({
             </button> */}
           </div>
           <div className="grid-3 mt-2">
-            <div className="input-group"><label>Pulse</label><input value={form.pulse} onChange={(event) => onFieldChange('pulse', event.target.value)} /></div>
-            <div className="input-group"><label>SBP</label><input value={form.sbp} onChange={(event) => onFieldChange('sbp', event.target.value)} /></div>
-            <div className="input-group"><label>DBP</label><input value={form.dbp} onChange={(event) => onFieldChange('dbp', event.target.value)} /></div>
-            <div className="input-group"><label>SpO2</label><input value={form.spo2} onChange={(event) => onFieldChange('spo2', event.target.value)} /></div>
-            <div className="input-group"><label>RR</label><input value={form.rr} onChange={(event) => onFieldChange('rr', event.target.value)} /></div>
             <div className="input-group">
-              <label>Temperature</label>
-              <select value={form.temp} onChange={(event) => onFieldChange('temp', event.target.value)}>
+              <label>Pulse {requiredMarker}</label>
+              <input required min="0" max="300" type="number" value={form.pulse} onChange={(event) => onFieldChange('pulse', event.target.value)} />
+              {vitalErrors.pulse && <div className="field-error-text">{vitalErrors.pulse}</div>}
+            </div>
+            <div className="input-group">
+              <label>SBP {requiredMarker}</label>
+              <input required min="0" max="300" type="number" value={form.sbp} onChange={(event) => onFieldChange('sbp', event.target.value)} />
+              {vitalErrors.sbp && <div className="field-error-text">{vitalErrors.sbp}</div>}
+            </div>
+            <div className="input-group">
+              <label>DBP {requiredMarker}</label>
+              <input required min="0" max="200" type="number" value={form.dbp} onChange={(event) => onFieldChange('dbp', event.target.value)} />
+              {vitalErrors.dbp && <div className="field-error-text">{vitalErrors.dbp}</div>}
+            </div>
+            <div className="input-group">
+              <label>SpO2 {requiredMarker}</label>
+              <input required min="0" max="100" type="number" value={form.spo2} onChange={(event) => onFieldChange('spo2', event.target.value)} />
+              {vitalErrors.spo2 && <div className="field-error-text">{vitalErrors.spo2}</div>}
+            </div>
+            <div className="input-group">
+              <label>RR {requiredMarker}</label>
+              <input required min="0" max="80" type="number" value={form.rr} onChange={(event) => onFieldChange('rr', event.target.value)} />
+              {vitalErrors.rr && <div className="field-error-text">{vitalErrors.rr}</div>}
+            </div>
+            <div className="input-group">
+              <label>Temperature {requiredMarker}</label>
+              <select required value={form.temp} onChange={(event) => onFieldChange('temp', event.target.value)}>
                 <option value="Afebrile">Afebrile</option>
                 <option value="Febrile">Febrile</option>
               </select>
             </div>
           </div>
           <div className="input-group mt-2">
-            <label>Consciousness (ACVPU)</label>
-            <select value={form.consciousness} onChange={(event) => onFieldChange('consciousness', event.target.value)}>
+            <label>Consciousness (ACVPU) {requiredMarker}</label>
+            <select required value={form.consciousness} onChange={(event) => onFieldChange('consciousness', event.target.value)}>
               <option value="Alert">Alert</option>
               <option value="Confused">Confused</option>
               <option value="Verbal">Responding to verbal</option>

@@ -4,7 +4,13 @@ import { EncDesk } from './components/EncDesk';
 import { EncList } from './components/EncList';
 import { Header } from './components/Header';
 import { LoginScreen } from './components/LoginScreen';
-import { TriageForm, buildEvaluationInput, type ChecklistField, type FormState } from './components/TriageForm';
+import {
+  TriageForm,
+  buildEvaluationInput,
+  getVitalValidationMessage,
+  type ChecklistField,
+  type FormState
+} from './components/TriageForm';
 import { api } from './services/api.js';
 import type { EncRecord, LoginPayload, LoginResponse, Patient, TriageCategory } from './types/triage';
 import { evaluateTriage, mapCategoryToArea } from './utils/triageLogic';
@@ -193,6 +199,12 @@ function App() {
   }, [categoryOverridden, evaluation.category, shouldHoldAutoCategory]);
 
   const patientAgeNumber = Number(triageForm.patientAge);
+  const hasVitalValidationErrors =
+    Boolean(getVitalValidationMessage('pulse', triageForm.pulse)) ||
+    Boolean(getVitalValidationMessage('sbp', triageForm.sbp)) ||
+    Boolean(getVitalValidationMessage('dbp', triageForm.dbp)) ||
+    Boolean(getVitalValidationMessage('spo2', triageForm.spo2)) ||
+    Boolean(getVitalValidationMessage('rr', triageForm.rr));
   const canSubmit = Boolean(
     triageForm.crNo &&
     triageForm.patientName.trim() &&
@@ -201,10 +213,15 @@ function App() {
     patientAgeNumber >= 0 &&
     triageForm.patientGender &&
     triageForm.contactNumber.trim() &&
+    triageForm.complaintText.trim() &&
     triageForm.pulse &&
     triageForm.sbp &&
+    triageForm.dbp &&
     triageForm.spo2 &&
     triageForm.rr &&
+    triageForm.temp &&
+    triageForm.consciousness &&
+    !hasVitalValidationErrors &&
     triageForm.finalCategory
   );
 
