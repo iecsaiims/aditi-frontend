@@ -11,7 +11,7 @@ import {
   type ChecklistField,
   type FormState
 } from './components/TriageForm';
-import { api } from './services/api.js';
+import { api } from './services/api';
 import type { EncRecord, LoginPayload, LoginResponse, Patient, TriageCategory } from './types/triage';
 import { evaluateTriage, mapCategoryToArea } from './utils/triageLogic';
 
@@ -22,9 +22,9 @@ type AppRoute =
   | { page: 'enc-desk'; patientId: string };
 
 const initialLoginForm: LoginPayload = {
-  username: 'operator@aditi.org',
-  password: '1234',
-  role: 'triage_officer',
+  username: '',
+  password: '',
+  role: 'Choose your role',
   rememberMe: true
 };
 

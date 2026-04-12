@@ -334,7 +334,7 @@ export function TriageForm({
 
   return (
     <main id="triage-view" className="view">
-      <div className="view-header sticky">
+      <div className="view-header sticky triage-view-header">
         <button className="btn btn-icon" onClick={onBack} aria-label="Back">
           ←
         </button>
