@@ -21,13 +21,13 @@ export function LoginScreen({ form, onChange, onSubmit, loading, error }: Props)
 
       <div className="auth-card">
         <div className="form-group">
-          <label>Username / Triage ID</label>
+          <label>Email</label>
           <div className="input-wrapper">
             <input
-              type="text"
-              value={form.username}
-              onChange={(e) => onChange('username', e.target.value)}
-              placeholder="Username"
+              type="email"
+              value={form.email}
+              onChange={(e) => onChange('email', e.target.value)}
+              placeholder="staff@hospital.org"
             />
           </div>
         </div>
@@ -44,19 +44,8 @@ export function LoginScreen({ form, onChange, onSubmit, loading, error }: Props)
               type="password"
               value={form.password}
               onChange={(e) => onChange('password', e.target.value)}
-              placeholder="Enter PIN"
+              placeholder="Enter password"
             />
-          </div>
-        </div>
-
-        <div className="form-group">
-          <label>Select Role</label>
-          <div className="input-wrapper">
-            <select value={form.role} onChange={(e) => onChange('role', e.target.value)}>
-              <option value="">Choose your role...</option>
-              <option value="triage_officer">Triage Officer</option>
-              <option value="emergency_nurse">Emergency Nursing Coordinator</option>
-            </select>
           </div>
         </div>
 

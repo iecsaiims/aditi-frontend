@@ -2,6 +2,10 @@ import { useState } from 'react';
 import { AIIMSR_DEPARTMENTS, DEFAULT_DISPOSITION_DEPARTMENT } from '../data/departmentOptions';
 import type { EncRecord, Patient } from '../types/triage';
 
+function todayDateString() {
+  return new Date().toISOString().slice(0, 10);
+}
+
 type Props = {
   patient: Patient | undefined;
   record: EncRecord | undefined;
@@ -15,12 +19,14 @@ export function EncDesk({ patient, record, onBack, onSaveConsultation, onSaveDis
   const [department, setDepartment] = useState('');
   const [doctorName, setDoctorName] = useState('');
   const [callGivenBy, setCallGivenBy] = useState('');
+  const [callDate, setCallDate] = useState(todayDateString());
   const [callTime, setCallTime] = useState('');
 
   const [dispositionDepartment, setDispositionDepartment] = useState(
     record?.disposition?.department ?? DEFAULT_DISPOSITION_DEPARTMENT
   );
   const [dispositionStatus, setDispositionStatus] = useState(record?.disposition?.status ?? '');
+  const [dispositionDate, setDispositionDate] = useState(record?.disposition?.date ?? todayDateString());
   const [dispositionTime, setDispositionTime] = useState(record?.disposition?.time ?? '');
   const [dispositionNotes, setDispositionNotes] = useState(record?.disposition?.notes ?? '');
 
@@ -39,11 +45,12 @@ export function EncDesk({ patient, record, onBack, onSaveConsultation, onSaveDis
   const dispositionSaved = Boolean(record?.disposition?.status);
 
   const saveConsultation = () => {
-    if (!consultationCompleted) return;
+    if (!consultationCompleted || !callDate) return;
     onSaveConsultation(patient.id, {
       department: consultationCompleted === 'Yes' ? 'Final consultation' : department,
       doctorName,
       callGivenBy,
+      date: callDate,
       time: callTime,
       completed: consultationCompleted === 'Yes'
     });
@@ -51,14 +58,16 @@ export function EncDesk({ patient, record, onBack, onSaveConsultation, onSaveDis
     setDepartment('');
     setDoctorName('');
     setCallGivenBy('');
+    setCallDate(todayDateString());
     setCallTime('');
   };
 
   const saveDisposition = () => {
-    if (!dispositionDepartment || !dispositionStatus || !dispositionTime) return;
+    if (!dispositionDepartment || !dispositionStatus || !dispositionDate || !dispositionTime) return;
     onSaveDisposition(patient.id, {
       department: dispositionDepartment,
       status: dispositionStatus,
+      date: dispositionDate,
       time: dispositionTime,
       notes: dispositionNotes
     });
@@ -95,12 +104,13 @@ export function EncDesk({ patient, record, onBack, onSaveConsultation, onSaveDis
                   </span>
                 </div>
                 {call.completed ? (
-                  <p className="text-muted">Final consultation completed at {call.time || 'time not recorded'}.</p>
+                  <p className="text-muted">Final consultation completed on {call.date || 'date not recorded'} at {call.time || 'time not recorded'}.</p>
                 ) : (
                   <div className="info-grid">
                     <div><strong>Department:</strong> {call.department}</div>
                     <div><strong>Doctor:</strong> {call.doctorName || '-'}</div>
                     <div><strong>Call Given By:</strong> {call.callGivenBy || '-'}</div>
+                    <div><strong>Date:</strong> {call.date || '-'}</div>
                     <div><strong>Time:</strong> {call.time || '-'}</div>
                   </div>
                 )}
@@ -121,6 +131,10 @@ export function EncDesk({ patient, record, onBack, onSaveConsultation, onSaveDis
                 <option value="No">No</option>
                 <option value="Yes">Yes</option>
               </select>
+            </div>
+            <div className="input-group">
+              <label>Date</label>
+              <input type="date" value={callDate} onChange={(event) => setCallDate(event.target.value)} />
             </div>
             <div className="input-group">
               <label>Time</label>
@@ -171,6 +185,7 @@ export function EncDesk({ patient, record, onBack, onSaveConsultation, onSaveDis
           <div className="info-grid">
             <div><strong>Department:</strong> {record?.disposition?.department || '-'}</div>
             <div><strong>Status:</strong> {record?.disposition?.status}</div>
+            <div><strong>Date:</strong> {record?.disposition?.date || '-'}</div>
             <div><strong>Time:</strong> {record?.disposition?.time}</div>
             <div><strong>Notes:</strong> {record?.disposition?.notes || '-'}</div>
           </div>
@@ -193,6 +208,10 @@ export function EncDesk({ patient, record, onBack, onSaveConsultation, onSaveDis
                     <option key={status} value={status}>{status}</option>
                   ))}
                 </select>
+              </div>
+              <div className="input-group">
+                <label>Date</label>
+                <input type="date" value={dispositionDate} onChange={(event) => setDispositionDate(event.target.value)} />
               </div>
               <div className="input-group">
                 <label>Time</label>

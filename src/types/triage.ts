@@ -11,6 +11,7 @@ export interface TriageEvaluationInput {
   dbp: string;
   spo2: string;
   rr: string;
+  respiratorySupport: string;
   temp: string;
   consciousness: string;
   redPhysioCheckboxes: string[];
@@ -46,9 +47,12 @@ export interface Patient {
   timestamp: string;
   complaint?: string;
   pathway: PathwayType;
+  respiratorySupport?: string;
   triageData?: unknown;
   consultationStatus?: 'Pending' | 'Completed';
   dispositionStatus?: 'Pending' | 'Completed';
+  submittedBy?: string | null;
+  designation?: string | null;
 }
 
 export interface EncRecord {
@@ -57,21 +61,22 @@ export interface EncRecord {
     department: string;
     doctorName: string;
     callGivenBy: string;
+    date?: string;
     time: string;
     completed: boolean;
   }>;
   disposition?: {
     department: string;
     status: string;
+    date?: string;
     time: string;
     notes: string;
   };
 }
 
 export interface LoginPayload {
-  username: string;
+  email: string;
   password: string;
-  role: string;
   rememberMe: boolean;
 }
 
@@ -79,10 +84,24 @@ export interface LoginResponse {
   token: string;
   user: {
     id: string;
-    username: string;
+    email: string;
     role: string;
     displayName: string;
+    designation: string;
   };
+}
+
+export interface StaffCreatePayload {
+  name: string;
+  email: string;
+  password: string;
+  designation: string;
+  role: string;
+}
+
+export interface StoredSession {
+  token: string;
+  user: LoginResponse['user'];
 }
 
 export interface SpeechToTextResult {

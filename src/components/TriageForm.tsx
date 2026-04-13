@@ -57,6 +57,7 @@ type FormState = {
   dbp: string;
   spo2: string;
   rr: string;
+  respiratorySupport: string;
   temp: string;
   consciousness: string;
   pathway: PathwayType;
@@ -515,6 +516,16 @@ export function TriageForm({
               {vitalErrors.rr && <div className="field-error-text">{vitalErrors.rr}</div>}
             </div>
             <div className="input-group">
+              <label>Respiratory Support {requiredMarker}</label>
+              <select required value={form.respiratorySupport} onChange={(event) => onFieldChange('respiratorySupport', event.target.value)}>
+                <option value="">Select support</option>
+                <option value="Room Air">Room Air</option>
+                <option value="On Oxygen">On Oxygen</option>
+                <option value="On NIV">On NIV</option>
+                <option value="On Ventilatory support">On Ventilatory support</option>
+              </select>
+            </div>
+            <div className="input-group">
               <label>Temperature {requiredMarker}</label>
               <select required value={form.temp} onChange={(event) => onFieldChange('temp', event.target.value)}>
                 <option value="Afebrile">Afebrile</option>
@@ -684,6 +695,7 @@ export function buildEvaluationInput(form: FormState): TriageEvaluationInput {
     dbp: form.dbp,
     spo2: form.spo2,
     rr: form.rr,
+    respiratorySupport: form.respiratorySupport,
     temp: form.temp,
     consciousness: form.consciousness,
     redPhysioCheckboxes: form.redPhysioCheckboxes,

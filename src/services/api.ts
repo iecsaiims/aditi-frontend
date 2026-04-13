@@ -3,11 +3,14 @@ import type {
   LoginPayload,
   LoginResponse,
   Patient,
+  StaffCreatePayload,
+  StoredSession,
   SpeechToTextResult
 } from '../types/triage.js';
 
 const API_URL =
   import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:4000/api' : '');
+export const SESSION_STORAGE_KEY = 'project-aditi-session';
 
 const REQUEST_TIMEOUT_MS = 10000;
 const STT_REQUEST_TIMEOUT_MS = 60000;
@@ -22,9 +25,23 @@ async function request<T>(path: string, options?: RequestInit, timeoutMs = REQUE
 
   let response: Response;
   try {
+    const rawSession =
+      window.localStorage.getItem(SESSION_STORAGE_KEY) ??
+      window.sessionStorage.getItem(SESSION_STORAGE_KEY);
+    let session: StoredSession | null = null;
+    if (rawSession) {
+      try {
+        session = JSON.parse(rawSession) as StoredSession;
+      } catch {
+        window.localStorage.removeItem(SESSION_STORAGE_KEY);
+        window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
+      }
+    }
+
     response = await fetch(`${API_URL}${path}`, {
       headers: {
         'Content-Type': 'application/json',
+        ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}),
         ...(options?.headers || {})
       },
       ...options,
@@ -42,7 +59,29 @@ async function request<T>(path: string, options?: RequestInit, timeoutMs = REQUE
 
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(text || 'Request failed');
+    let message = text || 'Request failed';
+
+    try {
+      const parsed = JSON.parse(text) as { message?: string; error?: string };
+      if (parsed.message) {
+        message = parsed.message;
+      } else if (parsed.error) {
+        message = parsed.error;
+      }
+    } catch {
+      // Keep the raw text when the body is not JSON.
+    }
+
+    try {
+      const parsedIssues = JSON.parse(message) as Array<{ message?: string }>;
+      if (Array.isArray(parsedIssues) && parsedIssues[0]?.message) {
+        message = parsedIssues[0].message;
+      }
+    } catch {
+      // Keep the message as-is when it is not a serialized validation array.
+    }
+
+    throw new Error(message);
   }
 
   return response.json() as Promise<T>;
@@ -105,6 +144,11 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(payload)
     }),
+  createStaff: (payload: StaffCreatePayload) =>
+    request('/auth/staff', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    }),
 
   getPatients: () => request<Patient[]>('/patients'),
 
@@ -121,12 +165,14 @@ export const api = {
         department: string;
         doctorName?: string;
         callGivenBy?: string;
+        date?: string;
         time?: string;
         completed: boolean;
       }>;
       disposition?: {
         department: string;
         status: string;
+        date?: string;
         time: string;
         notes?: string;
       } | null;
@@ -138,6 +184,7 @@ export const api = {
         department: call.department,
         doctorName: call.doctorName ?? '',
         callGivenBy: call.callGivenBy ?? '',
+        date: call.date ?? '',
         time: call.time ?? '',
         completed: call.completed
       })),
@@ -145,6 +192,7 @@ export const api = {
         ? {
             department: response.disposition.department,
             status: response.disposition.status,
+            date: response.disposition.date ?? '',
             time: response.disposition.time,
             notes: response.disposition.notes ?? ''
           }

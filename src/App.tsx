@@ -4,6 +4,7 @@ import { EncDesk } from './components/EncDesk';
 import { EncList } from './components/EncList';
 import { Header } from './components/Header';
 import { LoginScreen } from './components/LoginScreen';
+import { StaffManagementScreen } from './components/StaffManagementScreen';
 import {
   TriageForm,
   buildEvaluationInput,
@@ -11,21 +12,37 @@ import {
   type ChecklistField,
   type FormState
 } from './components/TriageForm';
-import { api } from './services/api';
-import type { EncRecord, LoginPayload, LoginResponse, Patient, TriageCategory } from './types/triage';
+import { api, SESSION_STORAGE_KEY } from './services/api';
+import type {
+  EncRecord,
+  LoginPayload,
+  LoginResponse,
+  Patient,
+  StaffCreatePayload,
+  StoredSession,
+  TriageCategory
+} from './types/triage';
 import { evaluateTriage, mapCategoryToArea } from './utils/triageLogic';
 
 type AppRoute =
   | { page: 'triage-list' }
   | { page: 'triage-new' }
   | { page: 'enc-list' }
-  | { page: 'enc-desk'; patientId: string };
+  | { page: 'enc-desk'; patientId: string }
+  | { page: 'staff' };
 
 const initialLoginForm: LoginPayload = {
-  username: '',
+  email: '',
   password: '',
-  role: 'Choose your role',
   rememberMe: true
+};
+
+const initialStaffForm: StaffCreatePayload = {
+  name: '',
+  email: '',
+  password: '',
+  designation: 'Triage Officer',
+  role: 'triage_officer'
 };
 
 const initialTriageForm: FormState = {
@@ -46,6 +63,7 @@ const initialTriageForm: FormState = {
   dbp: '',
   spo2: '',
   rr: '',
+  respiratorySupport: '',
   temp: 'Afebrile',
   consciousness: 'Alert',
   pathway: 'NonTrauma',
@@ -70,17 +88,17 @@ function parseRoute(path = window.location.pathname): AppRoute {
     return { page: 'enc-desk', patientId: decodeURIComponent(path.replace('/enc/patient/', '')) };
   }
   if (path === '/enc-list' || path === '/enc') return { page: 'enc-list' };
+  if (path === '/staff') return { page: 'staff' };
   if (path === '/triage/new') return { page: 'triage-new' };
   return { page: 'triage-list' };
 }
 
 function landingForRole(role: string) {
+  if (role === 'admin') return '/staff';
   return role === 'emergency_nurse' ? '/enc-list' : '/triage-list';
 }
 
-const SESSION_STORAGE_KEY = 'project-aditi-session';
-
-function readStoredUser(): LoginResponse['user'] | null {
+function readStoredSession(): StoredSession | null {
   const rawSession =
     window.localStorage.getItem(SESSION_STORAGE_KEY) ??
     window.sessionStorage.getItem(SESSION_STORAGE_KEY);
@@ -88,7 +106,7 @@ function readStoredUser(): LoginResponse['user'] | null {
   if (!rawSession) return null;
 
   try {
-    return JSON.parse(rawSession) as LoginResponse['user'];
+    return JSON.parse(rawSession) as StoredSession;
   } catch {
     window.localStorage.removeItem(SESSION_STORAGE_KEY);
     window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
@@ -96,32 +114,37 @@ function readStoredUser(): LoginResponse['user'] | null {
   }
 }
 
-function storeUserSession(user: LoginResponse['user'], rememberMe: boolean) {
+function storeAuthSession(session: StoredSession, rememberMe: boolean) {
   const targetStorage = rememberMe ? window.localStorage : window.sessionStorage;
   const otherStorage = rememberMe ? window.sessionStorage : window.localStorage;
 
   otherStorage.removeItem(SESSION_STORAGE_KEY);
-  targetStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(user));
+  targetStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
 }
 
-function clearUserSession() {
+function clearAuthSession() {
   window.localStorage.removeItem(SESSION_STORAGE_KEY);
   window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
 }
 
 function App() {
   const [loginForm, setLoginForm] = useState<LoginPayload>(initialLoginForm);
-  const [user, setUser] = useState<LoginResponse['user'] | null>(() => readStoredUser());
+  const [session, setSession] = useState<StoredSession | null>(() => readStoredSession());
   const [route, setRoute] = useState<AppRoute>(() => parseRoute());
   const [patients, setPatients] = useState<Patient[]>([]);
   const [encRecords, setEncRecords] = useState<Record<string, EncRecord>>({});
   const [triageForm, setTriageForm] = useState<FormState>(initialTriageForm);
+  const [staffForm, setStaffForm] = useState<StaffCreatePayload>(initialStaffForm);
   const [categoryOverridden, setCategoryOverridden] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState('');
+  const [staffLoading, setStaffLoading] = useState(false);
+  const [staffError, setStaffError] = useState('');
+  const [staffSuccess, setStaffSuccess] = useState('');
 
   const [patientsLoading, setPatientsLoading] = useState(true);
   const [patientsError, setPatientsError] = useState('');
+  const user = session?.user ?? null;
 
   const navigate = (path: string) => {
     window.history.pushState({}, '', path);
@@ -135,6 +158,14 @@ function App() {
       navigate(landingForRole(user.role));
     }
   }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    if (route.page === 'staff' && user.role !== 'admin') {
+      navigate(landingForRole(user.role));
+    }
+  }, [route.page, user]);
 
   useEffect(() => {
     const handlePopState = () => setRoute(parseRoute());
@@ -219,6 +250,7 @@ function App() {
     triageForm.dbp &&
     triageForm.spo2 &&
     triageForm.rr &&
+    triageForm.respiratorySupport &&
     triageForm.temp &&
     triageForm.consciousness &&
     !hasVitalValidationErrors &&
@@ -230,14 +262,10 @@ function App() {
       setLoginLoading(true);
       setLoginError('');
       const response = await api.login(loginForm);
-      const resolvedUser = {
-        ...response.user,
-        role: response.user.role || loginForm.role,
-        displayName: response.user.displayName || loginForm.username
-      };
-      setUser(resolvedUser);
-      storeUserSession(resolvedUser, loginForm.rememberMe);
-      navigate(landingForRole(resolvedUser.role));
+      const nextSession = { token: response.token, user: response.user };
+      setSession(nextSession);
+      storeAuthSession(nextSession, loginForm.rememberMe);
+      navigate(landingForRole(response.user.role));
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Login failed. Please try again.';
       setLoginError(message);
@@ -247,8 +275,8 @@ function App() {
   };
 
   const handleLogout = () => {
-    clearUserSession();
-    setUser(null);
+    clearAuthSession();
+    setSession(null);
     setRoute({ page: 'triage-list' });
     window.history.pushState({}, '', '/login');
   };
@@ -345,6 +373,7 @@ function App() {
       timestamp: now.toISOString(),
       complaint: triageForm.complaintText,
       pathway: triageForm.pathway,
+      respiratorySupport: triageForm.respiratorySupport,
       triageData: buildEvaluationInput(triageForm),
       consultationStatus: 'Pending',
       dispositionStatus: 'Pending'
@@ -400,6 +429,22 @@ function App() {
     });
   };
 
+  const handleCreateStaff = async () => {
+    try {
+      setStaffLoading(true);
+      setStaffError('');
+      setStaffSuccess('');
+      await api.createStaff(staffForm);
+      setStaffSuccess(`Created staff account for ${staffForm.email}.`);
+      setStaffForm(initialStaffForm);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Could not create staff account.';
+      setStaffError(message);
+    } finally {
+      setStaffLoading(false);
+    }
+  };
+
   if (!user) {
     return (
       <LoginScreen
@@ -421,6 +466,7 @@ function App() {
       <Header
         userDisplayName={user.displayName}
         role={user.role}
+        canManageStaff={user.role === 'admin'}
         onLogout={handleLogout}
         onNavigate={navigate}
       />
@@ -469,6 +515,17 @@ function App() {
           onBack={() => navigate('/enc-list')}
           onSaveConsultation={saveConsultation}
           onSaveDisposition={saveDisposition}
+        />
+      )}
+
+      {route.page === 'staff' && user.role === 'admin' && (
+        <StaffManagementScreen
+          form={staffForm}
+          loading={staffLoading}
+          error={staffError}
+          success={staffSuccess}
+          onChange={(field, value) => setStaffForm((previous) => ({ ...previous, [field]: value }))}
+          onSubmit={handleCreateStaff}
         />
       )}
     </div>
