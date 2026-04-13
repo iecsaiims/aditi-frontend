@@ -99,6 +99,24 @@ export interface StaffCreatePayload {
   role: string;
 }
 
+export interface StaffBatchPayload {
+  users: StaffCreatePayload[];
+}
+
+export interface StaffBatchResult {
+  createdUsers: Array<LoginResponse['user']>;
+  errors: Array<{
+    row: number;
+    email: string;
+    message: string;
+  }>;
+}
+
+export interface ChangePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
+}
+
 export interface StoredSession {
   token: string;
   user: LoginResponse['user'];

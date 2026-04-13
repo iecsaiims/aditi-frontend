@@ -14,10 +14,11 @@ import {
 } from './components/TriageForm';
 import { api, SESSION_STORAGE_KEY } from './services/api';
 import type {
+  ChangePasswordPayload,
   EncRecord,
   LoginPayload,
-  LoginResponse,
   Patient,
+  StaffBatchResult,
   StaffCreatePayload,
   StoredSession,
   TriageCategory
@@ -141,6 +142,9 @@ function App() {
   const [staffLoading, setStaffLoading] = useState(false);
   const [staffError, setStaffError] = useState('');
   const [staffSuccess, setStaffSuccess] = useState('');
+  const [batchLoading, setBatchLoading] = useState(false);
+  const [batchError, setBatchError] = useState('');
+  const [batchResult, setBatchResult] = useState<StaffBatchResult | null>(null);
 
   const [patientsLoading, setPatientsLoading] = useState(true);
   const [patientsError, setPatientsError] = useState('');
@@ -434,6 +438,8 @@ function App() {
       setStaffLoading(true);
       setStaffError('');
       setStaffSuccess('');
+      setBatchError('');
+      setBatchResult(null);
       await api.createStaff(staffForm);
       setStaffSuccess(`Created staff account for ${staffForm.email}.`);
       setStaffForm(initialStaffForm);
@@ -443,6 +449,28 @@ function App() {
     } finally {
       setStaffLoading(false);
     }
+  };
+
+  const handleCreateStaffBatch = async (users: StaffCreatePayload[]) => {
+    try {
+      setBatchLoading(true);
+      setBatchError('');
+      setBatchResult(null);
+      setStaffError('');
+      setStaffSuccess('');
+      const result = await api.createStaffBatch({ users });
+      setBatchResult(result);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Could not import staff accounts.';
+      setBatchError(message);
+    } finally {
+      setBatchLoading(false);
+    }
+  };
+
+  const handleChangePassword = async (payload: ChangePasswordPayload) => {
+    const response = await api.changePassword(payload);
+    return response.message;
   };
 
   if (!user) {
@@ -465,10 +493,12 @@ function App() {
     <div id="app-container">
       <Header
         userDisplayName={user.displayName}
+        designation={user.designation}
         role={user.role}
         canManageStaff={user.role === 'admin'}
         onLogout={handleLogout}
         onNavigate={navigate}
+        onChangePassword={handleChangePassword}
       />
 
       {route.page === 'triage-list' && (
@@ -524,8 +554,12 @@ function App() {
           loading={staffLoading}
           error={staffError}
           success={staffSuccess}
+          batchLoading={batchLoading}
+          batchError={batchError}
+          batchResult={batchResult}
           onChange={(field, value) => setStaffForm((previous) => ({ ...previous, [field]: value }))}
           onSubmit={handleCreateStaff}
+          onBatchSubmit={handleCreateStaffBatch}
         />
       )}
     </div>

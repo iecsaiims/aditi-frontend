@@ -1,8 +1,11 @@
 import type {
+  ChangePasswordPayload,
   EncRecord,
   LoginPayload,
   LoginResponse,
   Patient,
+  StaffBatchPayload,
+  StaffBatchResult,
   StaffCreatePayload,
   StoredSession,
   SpeechToTextResult
@@ -146,6 +149,16 @@ export const api = {
     }),
   createStaff: (payload: StaffCreatePayload) =>
     request('/auth/staff', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    }),
+  createStaffBatch: (payload: StaffBatchPayload) =>
+    request<StaffBatchResult>('/auth/staff/batch', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    }),
+  changePassword: (payload: ChangePasswordPayload) =>
+    request<{ message: string }>('/auth/change-password', {
       method: 'POST',
       body: JSON.stringify(payload)
     }),
