@@ -19,12 +19,14 @@ function roleLabel(role: string) {
 }
 
 function initialsFromName(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? '')
-    .join('') || 'U';
+  return (
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() ?? '')
+      .join('') || 'U'
+  );
 }
 
 export function Header({
@@ -109,12 +111,15 @@ export function Header({
         <div className="header-brand">
           <img src="/assets/aiims-raipur-logo.png" alt="AIIMS Raipur logo" className="header-logo-img" />
           <div className="header-text">
-            <div className="header-title" onClick={() => onNavigate('/triage-list')} >Project ADiTI</div>
+            <div className="header-title" onClick={() => onNavigate('/triage-list')}>
+              Project ADiTI
+            </div>
             <div className="header-subtitle hidden-mobile">
               Automated Digital Interface for Triage in Indian Emergency Departments
             </div>
           </div>
         </div>
+
         <nav className="header-nav">
           <button className="btn btn-small btn-ghost" onClick={() => onNavigate('/triage-list')}>
             Triage
@@ -128,6 +133,7 @@ export function Header({
             </button>
           )}
         </nav>
+
         <div className="header-actions">
           <div className="profile-menu" ref={profileRef}>
             <button
@@ -142,7 +148,7 @@ export function Header({
                 <strong>{userDisplayName}</strong>
                 <small>{designation || roleLabel(role)}</small>
               </span>
-              <span className="profile-caret" aria-hidden="true">▾</span>
+              <span className="profile-caret" aria-hidden="true">v</span>
             </button>
 
             {menuOpen && (
@@ -154,7 +160,11 @@ export function Header({
                 <button type="button" className="profile-dropdown-item" onClick={openPasswordPanel}>
                   Change Password
                 </button>
-                <button type="button" className="profile-dropdown-item profile-dropdown-item-danger" onClick={onLogout}>
+                <button
+                  type="button"
+                  className="profile-dropdown-item profile-dropdown-item-danger"
+                  onClick={onLogout}
+                >
                   Logout
                 </button>
               </div>
@@ -169,10 +179,17 @@ export function Header({
             <div className="profile-panel-header">
               <div>
                 <h3>Change Password</h3>
-                <p className="text-muted text-xs">Update your access password for the clinical workflow system.</p>
+                <p className="text-muted text-xs">
+                  Update your access password for the clinical workflow system.
+                </p>
               </div>
-              <button type="button" className="btn btn-icon" onClick={() => setPanelOpen(false)} aria-label="Close change password panel">
-                ×
+              <button
+                type="button"
+                className="btn btn-icon"
+                onClick={() => setPanelOpen(false)}
+                aria-label="Close change password panel"
+              >
+                x
               </button>
             </div>
 
@@ -181,7 +198,9 @@ export function Header({
               <input
                 type="password"
                 value={form.currentPassword}
-                onChange={(event) => setForm((previous) => ({ ...previous, currentPassword: event.target.value }))}
+                onChange={(event) =>
+                  setForm((previous) => ({ ...previous, currentPassword: event.target.value }))
+                }
               />
             </div>
 
@@ -190,7 +209,9 @@ export function Header({
               <input
                 type="password"
                 value={form.newPassword}
-                onChange={(event) => setForm((previous) => ({ ...previous, newPassword: event.target.value }))}
+                onChange={(event) =>
+                  setForm((previous) => ({ ...previous, newPassword: event.target.value }))
+                }
               />
             </div>
 
@@ -199,7 +220,9 @@ export function Header({
               <input
                 type="password"
                 value={form.confirmPassword}
-                onChange={(event) => setForm((previous) => ({ ...previous, confirmPassword: event.target.value }))}
+                onChange={(event) =>
+                  setForm((previous) => ({ ...previous, confirmPassword: event.target.value }))
+                }
               />
             </div>
 

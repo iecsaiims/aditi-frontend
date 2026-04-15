@@ -13,7 +13,7 @@ export function LoginScreen({ form, onChange, onSubmit, loading, error }: Props)
     <div id="auth-screen" className="screen active auth-redesign">
       <div className="auth-header-wrapper">
         <img src="/assets/aiims-raipur-logo.png" alt="AIIMS Raipur logo" className="auth-logo-img" />
-        <h1 className="auth-main-title">project aditi</h1>
+        <h1 className="auth-main-title">Project ADiTI</h1>
         <div className="auth-sub-title">
           Automated Digital Interface for Triage in Indian Emergency Departments
         </div>
@@ -79,7 +79,7 @@ export function LoginScreen({ form, onChange, onSubmit, loading, error }: Props)
           <a href="#">Terms of Service</a> <span className="sep">|</span>
           <a href="#">Tech Support</a>
         </div>
-        <div className="copyright">© 2026 PROJECT ADiTI. ALL RIGHTS RESERVED.</div>
+        <div className="copyright">Copyright 2026 PROJECT ADiTI. All rights reserved.</div>
       </div>
     </div>
   );

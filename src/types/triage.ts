@@ -50,7 +50,7 @@ export interface Patient {
   respiratorySupport?: string;
   triageData?: unknown;
   consultationStatus?: 'Pending' | 'Completed';
-  dispositionStatus?: 'Pending' | 'Completed';
+  dispositionStatus?: string;
   submittedBy?: string | null;
   designation?: string | null;
 }

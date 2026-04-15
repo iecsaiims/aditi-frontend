@@ -14,7 +14,28 @@ function latestStatus(record: EncRecord | undefined, kind: 'consultation' | 'dis
   if (kind === 'consultation') {
     return record.calls.some((call) => call.completed) ? 'Completed' : 'Pending';
   }
-  return record.disposition?.status ? 'Completed' : 'Pending';
+  return record.disposition?.status || 'Pending';
+}
+
+function dispositionBadgeClass(status: string) {
+  switch (status.toLowerCase()) {
+    case 'discharge':
+      return 'badge-discharge';
+    case 'admit':
+      return 'badge-admit';
+    case 'refer':
+      return 'badge-refer';
+    case 'abscond':
+      return 'badge-abscond';
+    case 'lama':
+      return 'badge-lama';
+    case 'death':
+      return 'badge-death';
+    case 'completed':
+      return 'badge-green';
+    default:
+      return 'badge-default';
+  }
 }
 
 export function EncList({ patients, records, loading, error, onOpenPatient, onRetry }: Props) {
@@ -64,6 +85,8 @@ export function EncList({ patients, records, loading, error, onOpenPatient, onRe
                 const record = records[patient.id];
                 const consultation = latestStatus(record, 'consultation');
                 const disposition = latestStatus(record, 'disposition');
+                const dispositionClass =
+                  disposition === 'Pending' ? 'badge-default' : dispositionBadgeClass(disposition);
                 return (
                   <tr key={patient.id} className="triage-row clickable-row" onClick={() => onOpenPatient(patient.id)}>
                     <td>{index + 1}</td>
@@ -75,7 +98,7 @@ export function EncList({ patients, records, loading, error, onOpenPatient, onRe
                     <td>{patient.pathway}</td>
                     <td><span className={`badge badge-${patient.category.toLowerCase()}`}>{patient.category}</span></td>
                     <td><span className={`badge ${consultation === 'Completed' ? 'badge-green' : 'badge-default'}`}>{consultation}</span></td>
-                    <td><span className={`badge ${disposition === 'Completed' ? 'badge-green' : 'badge-default'}`}>{disposition}</span></td>
+                    <td><span className={`badge ${dispositionClass}`}>{disposition}</span></td>
                   </tr>
                 );
               })}
