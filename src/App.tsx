@@ -377,6 +377,7 @@ function App() {
       timestamp: now.toISOString(),
       complaint: triageForm.complaintText,
       pathway: triageForm.pathway,
+      contactNumber: triageForm.contactNumber.trim(),
       respiratorySupport: triageForm.respiratorySupport,
       triageData: buildEvaluationInput(triageForm),
       consultationStatus: 'Pending',

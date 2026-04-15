@@ -47,6 +47,7 @@ export interface Patient {
   timestamp: string;
   complaint?: string;
   pathway: PathwayType;
+  contactNumber?: string;
   respiratorySupport?: string;
   triageData?: unknown;
   consultationStatus?: 'Pending' | 'Completed';
