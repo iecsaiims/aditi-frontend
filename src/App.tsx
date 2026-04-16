@@ -145,6 +145,8 @@ function App() {
   const [batchLoading, setBatchLoading] = useState(false);
   const [batchError, setBatchError] = useState('');
   const [batchResult, setBatchResult] = useState<StaffBatchResult | null>(null);
+  const [triageSubmitError, setTriageSubmitError] = useState('');
+  const [triageSubmitting, setTriageSubmitting] = useState(false);
 
   const [patientsLoading, setPatientsLoading] = useState(true);
   const [patientsError, setPatientsError] = useState('');
@@ -360,10 +362,13 @@ function App() {
   const handleNewTriage = () => {
     setTriageForm(initialTriageForm);
     setCategoryOverridden(false);
+    setTriageSubmitError('');
     navigate('/triage/new');
   };
 
   const handleSubmitTriage = async () => {
+    if (triageSubmitting) return;
+
     const finalCategory = triageForm.finalCategory as TriageCategory;
     const now = new Date();
     const payload: Omit<Patient, 'id'> = {
@@ -386,15 +391,22 @@ function App() {
 
     let created;
     try {
+      setTriageSubmitting(true);
+      setTriageSubmitError('');
       created = await api.createPatient(payload);
     } catch (error) {
       console.error('POST /patients failed:', error);
-      alert('Failed to save patient to backend');
+      setTriageSubmitError(
+        error instanceof Error ? error.message : 'Failed to save patient to backend.'
+      );
       return;
+    } finally {
+      setTriageSubmitting(false);
     }
     setPatients((previous) => [created, ...previous]);
     setTriageForm(initialTriageForm);
     setCategoryOverridden(false);
+    setTriageSubmitError('');
     navigate('/triage-list');
   };
 
@@ -518,6 +530,8 @@ function App() {
           evaluation={evaluation}
           requiredVitalsMissing={requiredVitalsMissing}
           canSubmit={canSubmit}
+          submitting={triageSubmitting}
+          submitError={triageSubmitError}
           onBack={() => setRoute({ page: 'triage-list' })}
           onSubmit={handleSubmitTriage}
           onFieldChange={updateTriageField}

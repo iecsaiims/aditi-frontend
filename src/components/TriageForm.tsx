@@ -104,6 +104,8 @@ type Props = {
   evaluation: TriageResult | null;
   requiredVitalsMissing: boolean;
   canSubmit: boolean;
+  submitting: boolean;
+  submitError: string;
   onBack: () => void;
   onSubmit: () => void;
   onFieldChange: <K extends keyof FormState>(field: K, value: FormState[K]) => void;
@@ -129,6 +131,8 @@ export function TriageForm({
   evaluation,
   requiredVitalsMissing,
   canSubmit,
+  submitting,
+  submitError,
   onBack,
   onSubmit,
   onFieldChange,
@@ -664,6 +668,7 @@ export function TriageForm({
         </section>
 
         <div className="form-actions sticky-bottom">
+          {submitError && <div className="auth-error form-submit-error">{submitError}</div>}
           <div className="result-summary">
             <div>Recommended Category:</div>
             <div id="calc-category" className="font-bold">
@@ -673,8 +678,15 @@ export function TriageForm({
               {autoSuggestionText}
             </div>
           </div>
-          <button type="button" className="btn btn-primary btn-large" disabled={!canSubmit} onClick={onSubmit}>
-            Submit Triage
+          <button
+            type="button"
+            className="btn btn-primary btn-large"
+            disabled={!canSubmit || submitting}
+            onClick={onSubmit}
+            aria-busy={submitting}
+          >
+            {submitting && <span className="btn-loading-spinner" aria-hidden="true"></span>}
+            {submitting ? 'Submitting...' : 'Submit Triage'}
           </button>
         </div>
       </form>
