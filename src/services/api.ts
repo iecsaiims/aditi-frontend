@@ -15,7 +15,7 @@ const API_URL =
   import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:4000/api' : '');
 export const SESSION_STORAGE_KEY = 'project-aditi-session';
 
-const REQUEST_TIMEOUT_MS = 10000;
+const REQUEST_TIMEOUT_MS = 30000;
 const STT_REQUEST_TIMEOUT_MS = 60000;
 
 async function request<T>(path: string, options?: RequestInit, timeoutMs = REQUEST_TIMEOUT_MS): Promise<T> {
