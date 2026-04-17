@@ -1,5 +1,6 @@
 import type {
   ChangePasswordPayload,
+  CreatePatientPayload,
   EncRecord,
   LoginPayload,
   LoginResponse,
@@ -165,7 +166,7 @@ export const api = {
 
   getPatients: () => request<Patient[]>('/patients'),
 
-  createPatient: (payload: Omit<Patient, 'id'>) =>
+  createPatient: (payload: CreatePatientPayload) =>
     request<Patient>('/patients', {
       method: 'POST',
       body: JSON.stringify(payload)

@@ -15,6 +15,7 @@ import {
 import { api, SESSION_STORAGE_KEY } from './services/api';
 import type {
   ChangePasswordPayload,
+  CreatePatientPayload,
   EncRecord,
   LoginPayload,
   Patient,
@@ -370,16 +371,13 @@ function App() {
     if (triageSubmitting) return;
 
     const finalCategory = triageForm.finalCategory as TriageCategory;
-    const now = new Date();
-    const payload: Omit<Patient, 'id'> = {
+    const payload: CreatePatientPayload = {
       crNo: triageForm.crNo,
       name: triageForm.patientName,
       age: Number(triageForm.patientAge),
       gender: triageForm.patientGender,
       category: finalCategory,
       area: mapCategoryToArea(finalCategory),
-      time: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      timestamp: now.toISOString(),
       complaint: triageForm.complaintText,
       pathway: triageForm.pathway,
       contactNumber: triageForm.contactNumber.trim(),

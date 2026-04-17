@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { Patient, TriageCategory } from '../types/triage';
+import { formatIstDateFilterValue, formatIstTime, istTimeToMinutes } from '../utils/dateTime';
 
 type Props = {
   patients: Patient[];
@@ -35,10 +36,13 @@ export function Dashboard({ patients, loading, error, onRetry, onNewTriage }: Pr
   const filteredPatients = useMemo(() => {
     const normalizedTimeFilter = timeFilter.trim();
     const next = patients.filter((patient) => {
-      const patientDate = new Date(patient.timestamp).toISOString().slice(0, 10);
+      const patientDate = formatIstDateFilterValue(patient.timestamp);
+      const patientTime = formatIstTime(patient.timestamp, patient.time);
       const matchesDate = !dateFilter || patientDate === dateFilter;
       const matchesTriage = !triageFilter || patient.category === triageFilter;
-      const matchesTime = !normalizedTimeFilter || patient.time.toLowerCase().includes(normalizedTimeFilter.toLowerCase());
+      const matchesTime =
+        !normalizedTimeFilter ||
+        patientTime.toLowerCase().includes(normalizedTimeFilter.toLowerCase());
       return matchesDate && matchesTriage && matchesTime;
     });
 
@@ -49,9 +53,9 @@ export function Dashboard({ patients, loading, error, onRetry, onNewTriage }: Pr
         case 'date-desc':
           return new Date(right.timestamp).getTime() - new Date(left.timestamp).getTime();
         case 'time-asc':
-          return left.time.localeCompare(right.time);
+          return istTimeToMinutes(left.timestamp) - istTimeToMinutes(right.timestamp);
         case 'time-desc':
-          return right.time.localeCompare(left.time);
+          return istTimeToMinutes(right.timestamp) - istTimeToMinutes(left.timestamp);
         case 'triage-asc':
           return TRIAGE_ORDER[left.category] - TRIAGE_ORDER[right.category];
         case 'triage-desc':
@@ -209,7 +213,7 @@ export function Dashboard({ patients, loading, error, onRetry, onNewTriage }: Pr
                         </td>
                         <td>
                           <small className="text-muted">
-                            <strong>{patient.time}</strong>
+                            <strong>{formatIstTime(patient.timestamp, patient.time)}</strong>
                           </small>
                         </td>
                       </tr>

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { EncRecord, Patient, TriageCategory } from '../types/triage';
+import { formatIstDate, formatIstDateFilterValue, formatIstTime, istTimeToMinutes } from '../utils/dateTime';
 
 type Props = {
   patients: Patient[];
@@ -79,11 +80,12 @@ export function EncList({ patients, records, loading, error, onOpenPatient, onRe
         const record = records[patient.id];
         const consultation = latestStatus(record, 'consultation');
         const disposition = latestStatus(record, 'disposition');
-        const patientDate = new Date(patient.timestamp).toISOString().slice(0, 10);
+        const patientDate = formatIstDateFilterValue(patient.timestamp);
+        const patientTime = formatIstTime(patient.timestamp, patient.time);
 
         const matchesDate = !dateFilter || patientDate === dateFilter;
         const matchesTriage = !triageFilter || patient.category === triageFilter;
-        const matchesTime = !timeFilter || patient.time.toLowerCase().includes(timeFilter.toLowerCase());
+        const matchesTime = !timeFilter || patientTime.toLowerCase().includes(timeFilter.toLowerCase());
         const matchesConsultation = !consultationFilter || consultation === consultationFilter;
         const matchesDisposition = !dispositionFilter || disposition === dispositionFilter;
 
@@ -104,9 +106,9 @@ export function EncList({ patients, records, loading, error, onOpenPatient, onRe
         case 'date-desc':
           return new Date(right.timestamp).getTime() - new Date(left.timestamp).getTime();
         case 'time-asc':
-          return left.time.localeCompare(right.time);
+          return istTimeToMinutes(left.timestamp) - istTimeToMinutes(right.timestamp);
         case 'time-desc':
-          return right.time.localeCompare(left.time);
+          return istTimeToMinutes(right.timestamp) - istTimeToMinutes(left.timestamp);
         case 'triage-asc':
           return TRIAGE_ORDER[left.category] - TRIAGE_ORDER[right.category];
         case 'triage-desc':
@@ -260,8 +262,8 @@ export function EncList({ patients, records, loading, error, onOpenPatient, onRe
                       return (
                         <tr key={patient.id} className="triage-row clickable-row" onClick={() => onOpenPatient(patient.id)}>
                           <td>{(currentPage - 1) * PAGE_SIZE + index + 1}</td>
-                          <td>{new Date(patient.timestamp).toLocaleDateString('en-IN')}</td>
-                          <td>{patient.time}</td>
+                          <td>{formatIstDate(patient.timestamp, new Date(patient.timestamp).toLocaleDateString('en-IN'))}</td>
+                          <td>{formatIstTime(patient.timestamp, patient.time)}</td>
                           <td><strong>{patient.name}</strong></td>
                           <td>{patient.age} / {patient.gender}</td>
                           <td>{patient.crNo}</td>

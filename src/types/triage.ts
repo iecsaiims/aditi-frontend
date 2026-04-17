@@ -56,6 +56,22 @@ export interface Patient {
   designation?: string | null;
 }
 
+export interface CreatePatientPayload {
+  crNo: string;
+  name: string;
+  age: number;
+  gender: 'M' | 'F' | 'O';
+  category: TriageCategory;
+  area: string;
+  complaint?: string;
+  pathway: PathwayType;
+  contactNumber?: string;
+  respiratorySupport?: string;
+  triageData?: unknown;
+  consultationStatus?: 'Pending' | 'Completed';
+  dispositionStatus?: string;
+}
+
 export interface EncRecord {
   patientId: string;
   calls: Array<{
