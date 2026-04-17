@@ -180,22 +180,28 @@ function App() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  const loadPatients = async () => {
+  const shouldLoadEncRecords = route.page === 'enc-list' || route.page === 'enc-desk';
+
+  const loadEncRecords = async (patientList: Patient[]) => {
+    const records = await Promise.all(
+      patientList.map(async (patient) => {
+        try {
+          return await api.getEncRecord(patient.id);
+        } catch {
+          return { patientId: patient.id, calls: [] } satisfies EncRecord;
+        }
+      })
+    );
+
+    setEncRecords(Object.fromEntries(records.map((record) => [record.patientId, record])));
+  };
+
+  const loadPatientsOnly = async () => {
     try {
       setPatientsLoading(true);
       setPatientsError('');
       const response = await api.getPatients();
       setPatients(response);
-      const records = await Promise.all(
-        response.map(async (patient) => {
-          try {
-            return await api.getEncRecord(patient.id);
-          } catch {
-            return { patientId: patient.id, calls: [] } satisfies EncRecord;
-          }
-        })
-      );
-      setEncRecords(Object.fromEntries(records.map((record) => [record.patientId, record])));
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Could not load patients from backend';
@@ -210,8 +216,34 @@ function App() {
   useEffect(() => {
     if (!user) return;
 
-    void loadPatients();
+    void loadPatientsOnly();
   }, [user]);
+
+  useEffect(() => {
+    if (!user || !shouldLoadEncRecords || patients.length === 0) return;
+
+    void loadEncRecords(patients);
+  }, [patients, shouldLoadEncRecords, user]);
+
+  const refreshPatients = () => void loadPatientsOnly();
+  const refreshEncPatients = async () => {
+    try {
+      setPatientsLoading(true);
+      setPatientsError('');
+      const response = await api.getPatients();
+      setPatients(response);
+      await loadEncRecords(response);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Could not load patients from backend';
+      setPatients([]);
+      setEncRecords({});
+      setPatientsError(message);
+      console.error('GET /patients failed:', error);
+    } finally {
+      setPatientsLoading(false);
+    }
+  };
 
   const requiredVitalsMissing = useMemo(
     () => !triageForm.pulse || !triageForm.sbp || !triageForm.spo2 || !triageForm.rr,
@@ -517,7 +549,7 @@ function App() {
           patients={patients}
           loading={patientsLoading}
           error={patientsError}
-          onRetry={loadPatients}
+          onRetry={refreshPatients}
           onNewTriage={handleNewTriage}
         />
       )}
@@ -546,7 +578,7 @@ function App() {
           records={encRecords}
           loading={patientsLoading}
           error={patientsError}
-          onRetry={loadPatients}
+          onRetry={refreshEncPatients}
           onOpenPatient={(patientId) => navigate(`/enc/patient/${encodeURIComponent(patientId)}`)}
         />
       )}
